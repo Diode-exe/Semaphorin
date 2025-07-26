@@ -1,4 +1,4 @@
-#!/bin/bash
++#!/bin/bash
 mkdir -p logs
 #set -x
 verbose=1
@@ -52,18 +52,9 @@ if ! python3 -c 'import importlib.util; exit(not importlib.util.find_spec("pyimg
 fi
 
 # This would probably go better somewhere else, but I'm not sure where to put it since most of the script is just in functions.
+# From Diode-exe: Fixed it. clean() and clean_usbmuxd() are now moved to below the below if statement.
 
-clean() {
-    killall -CONT AMPDevicesAgent AMPDeviceDiscoveryAgent MobileDeviceUpdater
-}
 
-clean_usbmuxd() {
-    sudo killall usbmuxd 2>/dev/null
-    if [[ $(command -v systemctl 2>/dev/null) ]]; then
-        sleep 1
-        sudo systemctl restart usbmuxd
-    fi
-}
 
 if [[ $os =~ Darwin ]]; then
     echo "[*] Running on Darwin..."
@@ -105,13 +96,27 @@ elif [[ $os =~ Linux ]]; then
     fi
     #sudo killall usbmuxd 2>/dev/null
     #sleep 1
+    # commented out because you want graceful shutdowns of the whole script
     sudo -b $bin/usbmuxd -pf 2>/dev/null
     trap "clean_usbmuxd" EXIT
     trap "exit 1" INT TERM
 else
     echo "[!] What operating system are you even using..."
+    echo "[!] *BSD? Not Windows, surely! Please run this script on macOS or Linux."
     exit 1
 fi
+
+clean() {
+    killall -CONT AMPDevicesAgent AMPDeviceDiscoveryAgent MobileDeviceUpdater
+}
+
+clean_usbmuxd() {
+    sudo killall usbmuxd 2>/dev/null
+    if [[ $(command -v systemctl 2>/dev/null) ]]; then
+        sleep 1
+        sudo systemctl restart usbmuxd
+    fi
+}
 
 print_help() {
     cat << EOF
